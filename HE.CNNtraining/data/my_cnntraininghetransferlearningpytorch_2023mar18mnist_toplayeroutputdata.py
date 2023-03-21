@@ -79,9 +79,9 @@ with torch.no_grad():
 
 print("train_dataset :" + str(len(train_dataset)) + ",\t" + str(len(train_dataset[0])) )
 print(type(train_dataset))
-with open('REGNET_X_400MF_MNIST_TRAINING.csv', 'w') as csvfile:
+with open('REGNET_X_400MF_MNIST_TRAININGfirst8192.csv', 'w') as csvfile:
     writer = csv.writer(csvfile)
-    for i in range(len(train_dataset)):
+    for i in range(8192):
       writer.writerow(train_dataset[i].detach().cpu().numpy())
 csvfile.close()
 
