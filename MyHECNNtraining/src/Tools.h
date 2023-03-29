@@ -99,19 +99,13 @@ public:
 			long sampleDim);
 	static double** zInvBFromTraindata(double **traindata, long &factorDim,
 			long &sampleDim, double epsilon = 1e-10);
+	static double calculateACC(double **testdata, int *testlabel, long testfactorDim, 
+			long testsampleDim, double *wData, long fdimNums, long labelnum);
+	static double calculateSLE(double **testdata, int **testlabel1hot, long testfactorDim, 
+			long testsampleDim, double *wData, long fdimNums, long labelnum);
 
-	static void shuffleDataSync(double **X, long factorDim, long sampleDim,
-			double *Y);
-	static void shuffleZData(double **zData, long factorDim, long sampleDim);
 
-	static double trueIP(double *a, double *b, long size);
 
-	static double calculateAUC(double **zData, double *wData, long factorDim,
-			long sampleDim, double &correctness, double &AUC);
-	static double calculateMLE(double **zData, double *wData, long factorDim,
-			long sampleDim, double &correctness, double &auc);
-	static double calculateACC(double **zData, double *wData, long factorDim,
-			long sampleDim, double &correctness, double &auc);
 
 	static size_t getPeakRSS();
 	static size_t getCurrentRSS();

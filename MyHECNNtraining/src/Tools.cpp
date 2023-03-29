@@ -300,178 +300,70 @@ double** Tools::zInvBFromTraindata(double **traindata, long &factorDim,
 
 }
 
-/**
- * Shuffle the order of each row in zData.
- * @param  : zData 
- * @param  : factorDim : dimension of the raw data [X:y]
- * @param  : sampleDim : the number of rows in the data, except for the first row which is a interpretation.
- * @param  : isfirst :
- * @return :
- * @author : no one
- */
-void Tools::shuffleZData(double **zData, long factorDim, long sampleDim) {
-	srand(time(NULL));
-	double *tmp = new double[factorDim];
-	for (long i = 0; i < sampleDim; ++i) {
-		long idx = i + rand() / (RAND_MAX / (sampleDim - i) + 1);
-		copy(zData[i], zData[i] + factorDim, tmp);
-		copy(zData[idx], zData[idx] + factorDim, zData[i]);
-		copy(tmp, tmp + factorDim, zData[idx]);
-	}
-}
-/**
- * Shuffle the order of each row in X and each element in Y in the same time.
- *
- * @param  : factorDim : dimension of the raw data X
- * @param  : sampleDim : the number of rows in the data.
- * @param  : isfirst :
- * @return :
- *
- * @author : no one
- */
-void Tools::shuffleDataSync(double **X, long factorDim, long sampleDim,
-		double *Y) {
-	srand(time(NULL));
-	double *tmp = new double[factorDim];
-	double temp;
-	for (long i = 0; i < sampleDim; ++i) {
-		long idx = i + rand() / (RAND_MAX / (sampleDim - i) + 1);
-		copy(X[i], X[i] + factorDim, tmp);
-		temp = Y[i];
-		copy(X[idx], X[idx] + factorDim, X[i]);
-		Y[i] = Y[idx];
-		copy(tmp, tmp + factorDim, X[idx]);
-		Y[idx] = temp;
-	}
-}
 
-double Tools::trueIP(double *a, double *b, long size) {
-	double res = 0.0;
-	for (long i = 0; i < size; ++i) {
-		res += a[i] * b[i];
-	}
-	return res;
-}
-double Tools::calculateAUC(double **zData, double *wData, long factorDim,
-		long sampleDim, double &correctness, double &auc) {
-//	cout << "w:";
-	for (long i = 0; i < factorDim; ++i) {
-//		cout << wData[i] << ",";
-	}
-//	cout << endl;
+double Tools::calculateACC(double **testdata, int *testlabel, long testfactorDim, 
+			long testsampleDim, double *wData, long fdimNums, long labelnum) {
 
-	long TN = 0, FP = 0;
-
-	vector<double> thetaTN;
-	vector<double> thetaFP;
-
-	for (int i = 0; i < sampleDim; ++i) {
-		if (zData[i][0] > 0) {
-			if (Tools::trueIP(zData[i], wData, factorDim) < 0)
-				TN++;
-			thetaTN.push_back(
-					zData[i][0]
-							* Tools::trueIP(zData[i] + 1, wData + 1,
-									factorDim - 1));
-		} else {
-			if (Tools::trueIP(zData[i], wData, factorDim) < 0)
-				FP++;
-			thetaFP.push_back(
-					zData[i][0]
-							* Tools::trueIP(zData[i] + 1, wData + 1,
-									factorDim - 1));
+	double **P = new double* [testsampleDim*labelnum];
+	for (long r = 0; r < testsampleDim; ++r) {
+		double *pr = new double[labelnum];
+		for (long c = 0; c < labelnum; ++c) {
+			double prob = 0.0;
+			for (long i = 0; i < testfactorDim; ++i)
+				prob += testdata[r][i] *wData[c * fdimNums + i];
+			pr[c] = 1.0 / ( 1 + exp(-prob) );
 		}
+		P[r] = pr;
 	}
 
-	correctness = 100.0 - (100.0 * (FP + TN) / sampleDim);
-
-	if (thetaFP.size() == 0 || thetaTN.size() == 0) {
-		cout << "n_test_yi = 0 : cannot compute AUC" << endl;
-		auc = 0.0;
-	} else {
-		auc = 0.0;
-		for (long i = 0; i < thetaTN.size(); ++i) {
-			for (long j = 0; j < thetaFP.size(); ++j) {
-				if (thetaFP[j] <= thetaTN[i])
-					auc++;
+	double correctness = 0.0;
+	for (long r = 0; r < testsampleDim; ++r) {
+		long   maxidx = 0;
+		double maxval = P[r][0];
+		for (long c = 0; c < labelnum; ++c) {
+			if ( P[r][c] > maxval ) {
+				maxval = P[r][c];
+				maxidx = c;
 			}
 		}
-		auc /= thetaTN.size() * thetaFP.size();
-		cout << "AUC: " << auc << endl;
+		if (maxidx == testlabel[r])
+			correctness += 1;
 	}
 
-	return auc;
+	return correctness/testsampleDim;
+
 }
 
-double Tools::calculateACC(double **zData, double *wData, long factorDim,
-		long sampleDim, double &correctness, double &auc) {
-//	cout << "w:";
-	for (long i = 0; i < factorDim; ++i) {
-//		cout << wData[i] << ",";
+
+double Tools::calculateSLE(double **testdata, int **testlabel1hot, long testfactorDim, 
+			long testsampleDim, double *wData, long fdimNums, long labelnum) {
+
+	double **P = new double* [testsampleDim*labelnum];
+	for (long r = 0; r < testsampleDim; ++r) {
+		double *pr = new double[labelnum];
+		for (long c = 0; c < labelnum; ++c) {
+			double prob = 0.0;
+			for (long i = 0; i < testfactorDim; ++i)
+				prob += testdata[r][i] *wData[c * fdimNums + i];
+			pr[c] = 1.0 / ( 1 + exp(-prob) ) - 1.0 + testlabel1hot[r][c];
+			if (pr[c] < 0) pr[c] = 0 - pr[c];
+			pr[c] = log(pr[c]);
+		}
+		P[r] = pr;
 	}
-//	cout << endl;
 
-	long TN = 0, FP = 0;
-
-	vector<double> thetaTN;
-	vector<double> thetaFP;
-
-	for (int i = 0; i < sampleDim; ++i) {
-		if (zData[i][0] > 0) {
-			if (Tools::trueIP(zData[i], wData, factorDim) < 0)
-				TN++;
-			thetaTN.push_back(
-					zData[i][0]
-							* Tools::trueIP(zData[i] + 1, wData + 1,
-									factorDim - 1));
-		} else {
-			if (Tools::trueIP(zData[i], wData, factorDim) < 0)
-				FP++;
-			thetaFP.push_back(
-					zData[i][0]
-							* Tools::trueIP(zData[i] + 1, wData + 1,
-									factorDim - 1));
+	double sle = 0.0;
+	for (long r = 0; r < testsampleDim; ++r) {
+		for (long c = 0; c < labelnum; ++c) {
+			sle += P[r][c];
 		}
 	}
 
-	correctness = 100.0 - (100.0 * (FP + TN) / sampleDim);
+	return sle;
 
-	if (thetaFP.size() == 0 || thetaTN.size() == 0) {
-		cout << "n_test_yi = 0 : cannot compute AUC" << endl;
-		auc = 0.0;
-	} else {
-		auc = 0.0;
-		for (long i = 0; i < thetaTN.size(); ++i) {
-			for (long j = 0; j < thetaFP.size(); ++j) {
-				if (thetaFP[j] <= thetaTN[i])
-					auc++;
-			}
-		}
-		auc /= thetaTN.size() * thetaFP.size();
-		//cout << "AUC: " << auc << endl;
-	}
-
-	return correctness;
 }
 
-double Tools::calculateMLE(double **zData, double *wData, long factorDim,
-		long sampleDim, double &correctness, double &auc) {
 
-	double *XW = new double[sampleDim]();
-	for (int i = 0; i < sampleDim; ++i) {
-		double res = 0;
-		for (int j = 0; j < factorDim; ++j)
-			res += zData[i][j] * wData[j];
-		XW[i] = res;
-	}
-	double mle = 0.0;
-	for (int i = 0; i < sampleDim; ++i) {
-		double logsigm = -log(1 + exp(-XW[i]));
-		mle += logsigm;
-	}
-
-	return mle;
-}
 
 /**
  * Returns the peak (maximum so far) resident set size (physical
