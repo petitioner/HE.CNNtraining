@@ -6,7 +6,7 @@
 ### Sigmoid(x) ~ poly3 = 0.5 + 0.10679534503216294.*x  + -0.00038503259805075.*x.^3;  (lambda = 128)
 
 
-HE.CNNtraining is a project for implementing our CNN train on  encrypted MNIST images (Privacy-Preserving CNN Training with Transfer Learning)
+HE.CNNtraining is a project for implementing our CNN training on  encrypted MNIST images (Privacy-Preserving CNN Training with Transfer Learning)
 
 ## How to run this program? 
 
