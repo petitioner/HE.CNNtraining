@@ -2,6 +2,7 @@
 #include <cmath>
 #include <set>
 #include <iomanip>
+#include <string>
 
 using namespace std;
 
@@ -152,6 +153,16 @@ cout << endl << endl;
     for (auto it = resutset.begin(); it != resutset.end(); ++it)
         cout << *it << ",\t";
     cout << endl << endl << resutset.size() << endl;
+
+
+
+
+    cout << endl;
+    cout << endl;
+    cout << endl;
+    cout << endl;
+    cout << endl;
+    cout << string("The ") + to_string( 4 ) << string("-th iteration begins ... ")  << endl;
 
 }
 

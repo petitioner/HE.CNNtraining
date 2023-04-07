@@ -18,12 +18,12 @@ using namespace NTL;
 
 int main(int argc, char **argv) {
 
-	SetNumThreads(42);
+	SetNumThreads(98);
 
 	//string trainfile = "../data/Original_MNIST_testdata.csv";
 	//string trainfile = "../data/REGNET_X_400MF_MNIST_TRAININGfirst8192.csv";
 	string trainfile = "../data/REGNET_X_400MF_MNIST_TRAININGfirst128.csv";
-	string testfile = trainfile; //"../data/REGNET_X_400MF_MNIST_TESTING.csv";
+	string testfile  = "../data/REGNET_X_400MF_MNIST_TESTING.csv";
 
 	long trainSampleDim = 0, testSampleDim = 0, trainfactorDim = 0,
 			testfactorDim = 0;

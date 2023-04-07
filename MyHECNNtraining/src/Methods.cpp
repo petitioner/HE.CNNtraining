@@ -23,10 +23,12 @@
 #include <map>
 #include <typeinfo>
 #include <vector>
+#include <string>
 #include <algorithm>    // std::shuffle
 #include <vector>        // std::vector
 #include <random>       // std::default_random_engine
 #include <chrono>       // std::chrono::system_clock
+#include <string>
 
 #include <unistd.h>
 
@@ -125,16 +127,17 @@ int CNNtraining(double **traindata, int *trainlabel, long trainfactorDim,
     }
     timeutils.stop("Scheme generation");
 
-    
+    timeutils.start("BootKey generating...");   
 //    long logp = 35;
 //    long logq = logp + 10; //< suppose the input ciphertext of bootstrapping has logq = logp + 10
-//    long logSlots = 9; //fdimBits//< larger logn will make bootstrapping tech much slower
+//    long logSlots = 9 * 4; //fdimBits//< larger logn will make bootstrapping tech much slower
 //    long logT = 4; //< this means that we use Taylor approximation in [-1/T,1/T] with double angle fomula
 //    long logI = 4;
 //    timeutils.start("Bootstrap Key generating");
 //    //scheme.addBootKey(secretKey, logn, logq+logI);    
 //    scheme.addBootKey(secretKey, logSlots, logq + 4);
 //    timeutils.stop("Bootstrap Key generated");
+    timeutils.stop("BootKey generation");
 
     ////////////////////////////////////////////////// Data owner ////////////////////////////////////////////////// 
     Ciphertext *encTrainData = new Ciphertext[rnum];
@@ -145,6 +148,7 @@ int CNNtraining(double **traindata, int *trainlabel, long trainfactorDim,
 
     Ciphertext encZerosData;  // encZerosData = Enc(0)
 
+    timeutils.start("encTrainData generating...");   
     // encTrainData
     for (long i = 0; i < rnum - 1; ++i) {
         complex<double> *pzData = new complex<double> [slots](); //();
@@ -167,11 +171,12 @@ int CNNtraining(double **traindata, int *trainlabel, long trainfactorDim,
         }
     }
     scheme.encrypt(encTrainData[rnum - 1], pzData, slots, wBits, logQ);
+    timeutils.stop("encTrainData generation");
     SerializationUtils::writeCiphertext(encTrainData[rnum - 1], "encTrainData["+ std::to_string(rnum - 1) +"].txt");
 
     delete[] pzData;
 
-
+    timeutils.start("encTrainLab1 encrypting...");  
     // encTrainLab1   :   encrypt trainlabel1hot
     for (long i = 0; i < rnum - 1; ++i) {
         complex<double> *pzData = new complex<double> [slots](); //();
@@ -195,6 +200,7 @@ int CNNtraining(double **traindata, int *trainlabel, long trainfactorDim,
         }
     }
     scheme.encrypt(encTrainLab1[rnum - 1], pzDatae, slots, wBits, logQ);
+    timeutils.stop("encTrainLab1 generation");
     SerializationUtils::writeCiphertext(encTrainLab1[rnum - 1], "encTrainLab1["+ std::to_string(rnum - 1) +"].txt");
 
     delete[] pzDatae;
@@ -216,7 +222,7 @@ int CNNtraining(double **traindata, int *trainlabel, long trainfactorDim,
     encVelocData.copy(encW8ghtData);
     encVelocData.n = slots;
 
-
+    timeutils.start("encZInvBData encrypting...");  
     // encZInvBData   :   trainfactorDim, trainsampleDim
     complex<double> *pzDataf = new complex<double> [slots](); //();
 
@@ -226,6 +232,7 @@ int CNNtraining(double **traindata, int *trainlabel, long trainfactorDim,
         }
     }
     scheme.encrypt(encZInvBData, pzDataf, slots, wBits, logQ);
+    timeutils.stop("encZInvBData generation");
     SerializationUtils::writeCiphertext(encZInvBData, "encZInvBData.txt");
 
     delete[] pzDataf;
@@ -263,6 +270,8 @@ int CNNtraining(double **traindata, int *trainlabel, long trainfactorDim,
 
         cout << "CurrentRSS (MB): " << ( Tools::getCurrentRSS() /1024.0/1024.0 ) << endl;
         cout << "PeakRSS    (MB): " << ( Tools::getPeakRSS() /1024.0/1024.0 )    << endl;
+
+        timeutils.start( string("The ") + to_string(iter + 1) + string("-th iteration begins ...") );  
 
         eta = (1 - alpha0) / alpha1;
         //double gamma = 10. / (iter + 1) / trainsampleDim;
@@ -777,10 +786,12 @@ int CNNtraining(double **traindata, int *trainlabel, long trainfactorDim,
         delete[] encProbData;
 
 
+        timeutils.stop( string("The ") + to_string(iter + 1) + string("-th iteration ends ...") ); 
+
 
         dcw = scheme.decrypt(secretKey, encW8ghtData);
         cout << endl << "Weight: " << endl;
-        Tools::printData(dcw, fdimNums, 2);
+        Tools::printData(dcw, fdimNums, 22);
         cout << "encW8ghtData.logp " << encW8ghtData.logp << endl;
         cout << "encW8ghtData.logq " << encW8ghtData.logq << endl;
 
@@ -847,6 +858,9 @@ int CNNtraining(double **traindata, int *trainlabel, long trainfactorDim,
 
 
     }
+
+    cout << "CurrentRSS (MB): " << ( Tools::getCurrentRSS() /1024.0/1024.0 ) << endl;
+    cout << "PeakRSS    (MB): " << ( Tools::getPeakRSS() /1024.0/1024.0 )    << endl;
 
     return 0;
 }
