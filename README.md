@@ -67,16 +67,12 @@ You can change the source codes and then repeat the above lines to debug your ow
 
 ## Running a test source code
 
-In the 'Default' folder, you can find two running results:   
+In the 'Default' folder, you can find one running results:   
 
-        'CNNinferArchiveFile20220407.7z_SetNumThreads(42)_nohup.out'  
+        '2023Apr07with12vCPUs_nohup.out'  
         
-        'CNNinferArchiveFile20220409.7z_SetNumThreads(42)_nohup.out'
-        
-        
-Also, you can find the CSV file storing the weights of our well-trained CNN inference model at:
 
-         HE.CNNinfer/CNNinference/data/CNNweightsMNIST.csv
+     
          
 
 
