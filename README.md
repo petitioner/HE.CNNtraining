@@ -12,7 +12,7 @@ HE.CNNtraining is a project for implementing our CNN training on  encrypted MNIS
 
 ### Dependencies
 
-On a Ubuntu cloud, our implementation requires the following libraries in order:
+In a Ubuntu cloud, our implementation requires the following libraries in order:
 * `g++`:      
 ```sh
                # apt install g++ 
